@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Course — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'course_list' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold">{% if object %}Edit Course{% else %}Create New Course{% endif %}</h4>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="card mb-3">
+        <div class="card-header py-3 px-4">Course Information</div>
+        <div class="card-body px-4">
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label fw-semibold">Course Title <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                value="{{ form.title.value|default:'' }}" placeholder="e.g. Introduction to Computer Science">
+              {% for e in form.title.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Course Code <span class="text-danger">*</span></label>
+              <input type="text" name="code" class="form-control {% if form.code.errors %}is-invalid{% endif %}"
+                value="{{ form.code.value|default:'' }}" placeholder="e.g. CS101"
+                style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              {% for e in form.code.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea name="description" class="form-control" rows="3"
+              placeholder="What will students learn in this course?">{{ form.description.value|default:'' }}</textarea>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active"
+              {% if form.is_active.value != False %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="is_active">Active (visible to enrolled students)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header py-3 px-4">Attach Exams <span class="text-muted fw-normal small">(optional)</span></div>
+        <div class="card-body px-4">
+          {% if form.exams.field.queryset.count %}
+            <p class="text-muted small mb-3">Select exams to include in this course. Students enrolled in this course will see these exams.</p>
+            <div class="row g-2">
+              {% for exam in form.exams.field.queryset %}
+              <div class="col-md-6">
+                <label class="d-flex align-items-start gap-2 p-3 rounded border cursor-pointer"
+                  style="cursor:pointer;transition:border-color .15s"
+                  onmouseover="this.style.borderColor='var(--ep-accent)'"
+                  onmouseout="this.style.borderColor=''">
+                  <input type="checkbox" name="exams" value="{{ exam.pk }}" class="form-check-input mt-0 flex-shrink-0"
+                    {% if exam.pk in form.exams.value|default:'' %}checked{% endif %}
+                    {% for v in form.exams.value %}{% if v == exam.pk|stringformat:'i' %}checked{% endif %}{% endfor %}>
+                  <div>
+                    <div class="fw-semibold small">{{ exam.title }}</div>
+                    <div class="text-muted small">
+                      <span class="badge badge-status-{{ exam.status }} me-1">{{ exam.get_status_display }}</span>
+                      {{ exam.duration_minutes }}m · {{ exam.question_count }} Qs
+                    </div>
+                  </div>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">
+              <i class="bi bi-info-circle me-1"></i>
+              No exams yet. <a href="{% url 'exam_create' %}">Create an exam</a> first, then come back to attach it.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if object %}Save Changes{% else %}Create Course{% endif %}
+        </button>
+        <a href="{% url 'course_list' %}" class="btn btn-light">Cancel</a>
+        {% if object %}
+          <a href="{% url 'course_detail' object.pk %}" class="btn btn-outline-primary ms-auto">
+            <i class="bi bi-people me-1"></i> Manage Students
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-5 mt-3 mt-lg-0">
+    <div class="card p-3 border-0 mb-3" style="background:#eef2ff;">
+      <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb text-primary me-1"></i> How courses work</h6>
+      <ul class="small text-muted mb-0 ps-3">
+        <li class="mb-1">Create a course and give it a unique code</li>
+        <li class="mb-1">Attach one or more exams to it</li>
+        <li class="mb-1">Enrol students from the course detail page</li>
+        <li>Students see their enrolled courses under "My Courses"</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

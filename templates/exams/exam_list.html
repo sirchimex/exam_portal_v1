@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Exams — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <h4 class="mb-0 fw-bold">Manage Exams</h4>
+  <a href="{% url 'exam_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> New Exam</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Title</th>
+          <th>Duration</th>
+          <th>Questions</th>
+          <th>Submissions</th>
+          <th>Status</th>
+          <th>Schedule</th>
+          <th class="pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exam in exams %}
+        <tr>
+          <td class="ps-4">
+            <div class="fw-semibold">{{ exam.title }}</div>
+            <div class="text-muted small">{{ exam.description|truncatechars:50 }}</div>
+          </td>
+          <td>{{ exam.duration_minutes }}m</td>
+          <td>{{ exam.question_count }}</td>
+          <td>{{ exam.result_count }}</td>
+          <td><span class="badge badge-status-{{ exam.status }}">{{ exam.get_status_display }}</span></td>
+          <td class="small text-muted">
+            {{ exam.start_time|date:"M d H:i" }} – {{ exam.end_time|date:"M d H:i" }}
+          </td>
+          <td class="pe-4">
+            <div class="d-flex gap-1">
+              <a href="{% url 'exam_questions' exam.pk %}" class="btn btn-sm btn-light" title="Questions">
+                <i class="bi bi-list-check"></i>
+              </a>
+              <a href="{% url 'exam_update' exam.pk %}" class="btn btn-sm btn-light" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'exam_delete' exam.pk %}" class="btn btn-sm btn-light text-danger" title="Delete">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-journal-x fs-2 d-block mb-2"></i>
+            No exams yet. <a href="{% url 'exam_create' %}">Create your first exam</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

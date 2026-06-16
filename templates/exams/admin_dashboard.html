@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-0 fw-bold">Dashboard</h4>
+  <p class="text-muted small mb-0">Hello, {{ user.get_full_name|default:user.username }} 👋</p>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-sm-6">
+    <div class="card stat-card p-3">
+      <div class="small text-muted fw-semibold">Total Exams</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-accent);">{{ total_exams }}</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="card stat-card success p-3">
+      <div class="small text-muted fw-semibold">Total Students</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-success);">{{ total_students }}</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="card stat-card warning p-3">
+      <div class="small text-muted fw-semibold">Submissions</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-warning);">{{ total_results }}</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-sm-6">
+    <div class="card stat-card danger p-3">
+      <div class="small text-muted fw-semibold">Courses</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-danger);">{{ total_courses }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div class="d-flex gap-2 mb-4">
+  <a href="{% url 'exam_create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> New Exam
+  </a>
+  <a href="{% url 'course_create' %}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-collection me-1"></i> New Course
+  </a>
+</div>
+
+<div class="row g-3">
+  <!-- Exams table -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span>My Exams</span>
+        <a href="{% url 'exam_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th class="ps-4">Title</th><th>Questions</th><th>Status</th><th>Submissions</th><th></th></tr></thead>
+          <tbody>
+            {% for exam in exams|slice:":6" %}
+            <tr>
+              <td class="ps-4 fw-semibold">{{ exam.title }}</td>
+              <td>{{ exam.question_count }}</td>
+              <td>
+                <span class="badge badge-status-{{ exam.status }}">{{ exam.get_status_display }}</span>
+              </td>
+              <td>{{ exam.result_count }}</td>
+              <td>
+                <a href="{% url 'exam_update' exam.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No exams yet. <a href="{% url 'exam_create' %}">Create one!</a></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent results -->
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span>Recent Submissions</span>
+        <a href="{% url 'admin_results' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for result in recent_results %}
+        <a href="{% url 'exam_result' result.pk %}" class="list-group-item list-group-item-action py-3 px-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-semibold small">{{ result.student.get_full_name|default:result.student.username }}</div>
+              <div class="text-muted small">{{ result.exam.title }}</div>
+            </div>
+            <span class="badge {% if result.passed %}bg-success{% else %}bg-danger{% endif %}">
+              {{ result.percentage|floatformat:0 }}%
+            </span>
+          </div>
+        </a>
+        {% empty %}
+        <div class="p-4 text-center text-muted">No submissions yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Recent courses -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span>Recent Courses</span>
+        <a href="{% url 'course_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for course in recent_courses %}
+        <a href="{% url 'course_detail' course.pk %}" class="list-group-item list-group-item-action py-3 px-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-semibold small">{{ course.title }}</div>
+              <div class="text-muted small">
+                <span class="badge me-1" style="background:#e0e7ff;color:#3730a3;font-size:.68rem">{{ course.code }}</span>
+                {{ course.enrolled_students }} student{{ course.enrolled_students|pluralize }}
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+          </div>
+        </a>
+        {% empty %}
+        <div class="p-4 text-center text-muted">
+          No courses yet. <a href="{% url 'course_create' %}">Create one!</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

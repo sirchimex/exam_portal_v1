@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-0 fw-bold">My Dashboard</h4>
+  <p class="text-muted small mb-0">Hello, {{ user.get_full_name|default:user.username }} 👋</p>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="card stat-card p-3">
+      <div class="small text-muted fw-semibold">Exams Taken</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-accent);">{{ total_exams_taken }}</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card stat-card success p-3">
+      <div class="small text-muted fw-semibold">Avg Score</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-success);">{{ avg_score|floatformat:1 }}%</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-sm-6">
+    <div class="card stat-card warning p-3">
+      <div class="small text-muted fw-semibold">Passed</div>
+      <div class="fs-2 fw-bold" style="color: var(--ep-warning);">{{ passed_count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Available exams -->
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span><i class="bi bi-play-circle text-success me-1"></i> Available Now</span>
+        <a href="{% url 'available_exams' %}" class="btn btn-sm btn-outline-primary">All Exams</a>
+      </div>
+      {% if available_exams %}
+        <div class="list-group list-group-flush">
+          {% for exam in available_exams %}
+          <div class="list-group-item py-3 px-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold">{{ exam.title }}</div>
+                <div class="text-muted small">
+                  <i class="bi bi-clock"></i> {{ exam.duration_minutes }} mins &nbsp;
+                  <i class="bi bi-question-circle"></i> {{ exam.question_count }} questions
+                </div>
+              </div>
+              <a href="{% url 'exam_detail' exam.pk %}" class="btn btn-sm btn-primary">Start</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+          No exams available right now.
+        </div>
+      {% endif %}
+    </div>
+
+    {% if upcoming_exams %}
+    <div class="card">
+      <div class="card-header py-3 px-4">
+        <i class="bi bi-calendar-event text-primary me-1"></i> Upcoming Exams
+      </div>
+      <div class="list-group list-group-flush">
+        {% for exam in upcoming_exams %}
+        <div class="list-group-item py-2 px-4">
+          <div class="d-flex justify-content-between">
+            <span class="fw-semibold">{{ exam.title }}</span>
+            <span class="text-muted small">Starts {{ exam.start_time|date:"M d, H:i" }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent results -->
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span><i class="bi bi-trophy text-warning me-1"></i> Recent Results</span>
+        <a href="{% url 'student_results' %}" class="btn btn-sm btn-outline-primary">All Results</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for result in results %}
+        <a href="{% url 'exam_result' result.pk %}" class="list-group-item list-group-item-action py-3 px-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-semibold small">{{ result.exam.title }}</div>
+              <div class="text-muted small">{{ result.submitted_at|date:"M d, Y" }}</div>
+            </div>
+            <span class="badge {% if result.passed %}bg-success{% else %}bg-danger{% endif %}">
+              {{ result.percentage|floatformat:0 }}%
+            </span>
+          </div>
+        </a>
+        {% empty %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-award fs-2 d-block mb-2"></i>
+          No results yet. Take an exam!
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- My Courses -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+        <span><i class="bi bi-collection text-primary me-1"></i> My Courses</span>
+        <a href="{% url 'my_courses' %}" class="btn btn-sm btn-outline-primary">All Courses</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for enr in my_courses %}
+        <a href="{% url 'my_course_detail' enr.course.pk %}" class="list-group-item list-group-item-action py-3 px-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-semibold small">{{ enr.course.title }}</div>
+              <div class="text-muted small">
+                <span class="badge me-1" style="background:#e0e7ff;color:#3730a3;font-size:.68rem">{{ enr.course.code }}</span>
+                {{ enr.course.exams.count }} exam{{ enr.course.exams.count|pluralize }}
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+          </div>
+        </a>
+        {% empty %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-collection fs-2 d-block mb-2"></i>
+          Not enrolled in any courses yet.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

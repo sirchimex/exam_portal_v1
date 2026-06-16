@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Result — {{ object.exam.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .score-ring { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; margin: 0 auto; }
+  .score-ring.passed { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border: 3px solid #6ee7b7; }
+  .score-ring.failed { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; border: 3px solid #fca5a5; }
+  .answer-item { border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+  .answer-item.correct { background: #f0fff4; border: 1px solid #6ee7b7; }
+  .answer-item.incorrect { background: #fff5f5; border: 1px solid #fca5a5; }
+  .answer-item.skipped { background: #fafafa; border: 1px solid var(--ep-border); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'student_results' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold">Exam Result</h4>
+</div>
+
+<!-- Score card -->
+<div class="row mb-4">
+  <div class="col-md-4 mb-3">
+    <div class="card p-4 text-center h-100">
+      <div class="score-ring {% if object.passed %}passed{% else %}failed{% endif %} mb-3">
+        {{ object.percentage|floatformat:0 }}%
+      </div>
+      <h5 class="fw-bold">{{ object.exam.title }}</h5>
+      <p class="text-muted small mb-2">{{ object.submitted_at|date:"M d, Y · H:i" }}</p>
+      <span class="badge fs-6 {% if object.passed %}bg-success{% else %}bg-danger{% endif %}">
+        {% if object.passed %}PASSED{% else %}FAILED{% endif %}
+      </span>
+    </div>
+  </div>
+  <div class="col-md-8 mb-3">
+    <div class="card p-4 h-100">
+      <h6 class="fw-bold mb-3">Summary</h6>
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="small text-muted">Score</div>
+          <div class="fw-bold fs-5">{{ object.score }} / {{ object.total_marks }}</div>
+        </div>
+        <div class="col-6">
+          <div class="small text-muted">Passing Score</div>
+          <div class="fw-bold fs-5">{{ object.exam.passing_score }}%</div>
+        </div>
+        <div class="col-6">
+          <div class="small text-muted">Time Taken</div>
+          <div class="fw-bold">{{ object.time_taken_minutes|floatformat:1 }} minutes</div>
+        </div>
+        <div class="col-6">
+          <div class="small text-muted">Attempt</div>
+          <div class="fw-bold">#{{ object.attempt_number }}</div>
+        </div>
+        <div class="col-12">
+          <!-- Score bar -->
+          <div class="small text-muted mb-1">Score breakdown</div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar {% if object.passed %}bg-success{% else %}bg-danger{% endif %}"
+              style="width: {{ object.percentage|floatformat:0 }}%"></div>
+            <div class="progress-bar bg-light" style="width: {{ object.exam.passing_score }}%; opacity:0.3;"></div>
+          </div>
+          <div class="d-flex justify-content-between small text-muted mt-1">
+            <span>0%</span>
+            <span>Pass: {{ object.exam.passing_score }}%</span>
+            <span>100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed answers -->
+<div class="card">
+  <div class="card-header py-3 px-4">
+    <strong>Answer Review</strong>
+  </div>
+  <div class="card-body p-4">
+    {% for qid, data in answers.items %}
+    <div class="answer-item {% if data.is_correct %}correct{% elif data.given %}incorrect{% else %}skipped{% endif %}">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="fw-semibold small" style="flex: 1;">{{ forloop.counter }}. {{ data.question_text }}</div>
+        <span class="badge ms-2 {% if data.is_correct %}bg-success{% elif data.given %}bg-danger{% else %}bg-secondary{% endif %}">
+          {% if data.is_correct %}+{{ data.marks }}{% elif data.given %}0{% else %}Skipped{% endif %}
+        </span>
+      </div>
+      <div class="row g-2 small">
+        <div class="col-md-6">
+          <span class="text-muted">Your answer:</span>
+          <span class="fw-semibold {% if not data.given %}text-muted fst-italic{% endif %}">
+            {{ data.given|default:"Not answered" }}
+          </span>
+        </div>
+        {% if not data.is_correct %}
+        <div class="col-md-6">
+          <span class="text-muted">Correct answer:</span>
+          <span class="fw-semibold text-success">{{ data.correct }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if data.explanation %}
+      <div class="mt-2 p-2 rounded small" style="background: rgba(0,0,0,0.04);">
+        <i class="bi bi-lightbulb text-warning me-1"></i> {{ data.explanation }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="mt-3">
+  <a href="{% url 'student_results' %}" class="btn btn-outline-primary">
+    <i class="bi bi-arrow-left me-1"></i> All Results
+  </a>
+  <a href="{% url 'available_exams' %}" class="btn btn-primary ms-2">
+    <i class="bi bi-play-circle me-1"></i> Take Another Exam
+  </a>
+</div>
+{% endblock %}

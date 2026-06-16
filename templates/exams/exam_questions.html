@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Questions — {{ exam.title }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'exam_list' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <div>
+    <h4 class="mb-0 fw-bold">Questions: {{ exam.title }}</h4>
+    <span class="badge badge-status-{{ exam.status }} small">{{ exam.get_status_display }}</span>
+    <span class="text-muted small ms-2">{{ exam.question_count }} questions · {{ exam.total_marks }} total marks</span>
+  </div>
+  <a href="{% url 'question_create' exam.pk %}" class="btn btn-primary btn-sm ms-auto">
+    <i class="bi bi-plus-lg"></i> Add Question
+  </a>
+</div>
+
+<!-- Inline formset for batch editing -->
+<form method="post">
+  {% csrf_token %}
+  {{ formset.management_form }}
+
+  {% for q_form in formset %}
+  <div class="card mb-3 {% if q_form.instance.pk %}border-start border-3{% endif %}" style="border-left-color: var(--ep-accent) !important;">
+    <div class="card-header py-2 px-4 d-flex justify-content-between align-items-center">
+      <span class="fw-semibold small">
+        {% if q_form.instance.pk %}Question #{{ forloop.counter }}{% else %}New Question{% endif %}
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        {% if q_form.instance.pk %}
+          <a href="{% url 'question_update' q_form.instance.pk %}" class="btn btn-sm btn-light">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <a href="{% url 'question_delete' q_form.instance.pk %}" class="btn btn-sm btn-light text-danger">
+            <i class="bi bi-trash"></i>
+          </a>
+        {% endif %}
+        <label class="form-check-label small text-danger">
+          {{ q_form.DELETE }} Remove
+        </label>
+      </div>
+    </div>
+    <div class="card-body px-4 pb-3">
+      <div class="row g-3">
+        {% for field in q_form %}
+          {% if field.html_name != 'DELETE' and field.html_name != 'id' %}
+          <div class="col-md-{% if 'option' in field.html_name or field.html_name == 'order' or field.html_name == 'marks' %}6{% elif field.html_name == 'question_type' %}4{% elif field.html_name == 'correct_answer' %}8{% else %}12{% endif %}">
+            <label class="form-label small fw-semibold">{{ field.label }}</label>
+            {{ field }}
+            {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card p-5 text-center text-muted mb-3">
+    <i class="bi bi-question-circle fs-2 d-block mb-2"></i>
+    No questions yet. Add your first question above.
+  </div>
+  {% endfor %}
+
+  {% if formset.forms %}
+  <div class="d-flex gap-2 mt-3">
+    <button type="submit" class="btn btn-primary">Save All Questions</button>
+    <a href="{% url 'exam_update' exam.pk %}" class="btn btn-light">Edit Exam Settings</a>
+  </div>
+  {% endif %}
+</form>
+
+<style>
+  .card-body .form-control, .card-body .form-select { font-size: 0.875rem; }
+</style>
+{% endblock %}

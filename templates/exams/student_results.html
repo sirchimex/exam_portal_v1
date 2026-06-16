@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}My Results — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-0 fw-bold">My Results</h4>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Exam</th>
+          <th>Score</th>
+          <th>Percentage</th>
+          <th>Status</th>
+          <th>Time Taken</th>
+          <th>Date</th>
+          <th class="pe-4">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+        <tr>
+          <td class="ps-4 fw-semibold">{{ result.exam.title }}</td>
+          <td>{{ result.score }} / {{ result.total_marks }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="height:6px; width:80px;">
+                <div class="progress-bar {% if result.passed %}bg-success{% else %}bg-danger{% endif %}"
+                  style="width: {{ result.percentage|floatformat:0 }}%"></div>
+              </div>
+              <span class="small">{{ result.percentage|floatformat:1 }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge {% if result.passed %}bg-success{% else %}bg-danger{% endif %}">
+              {% if result.passed %}Passed{% else %}Failed{% endif %}
+            </span>
+          </td>
+          <td class="text-muted small">{{ result.time_taken_minutes|floatformat:1 }}m</td>
+          <td class="text-muted small">{{ result.submitted_at|date:"M d, Y" }}</td>
+          <td class="pe-4">
+            <a href="{% url 'exam_result' result.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-award fs-2 d-block mb-2"></i>
+            No results yet. <a href="{% url 'available_exams' %}">Take your first exam!</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

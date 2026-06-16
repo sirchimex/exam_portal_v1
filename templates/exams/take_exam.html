@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load exam_filters %}
+{% block title %}{{ exam.title }} — ExamPortal{% endblock %}
+
+{% block extra_css %}
+<style>
+  .exam-container { max-width: 860px; margin: 0 auto; }
+  .timer-bar { position: sticky; top: 0; z-index: 100; background: var(--ep-primary); color: white; padding: 0.75rem 1.5rem; border-radius: 0 0 12px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .timer-display { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .timer-display.warning { color: var(--ep-warning); }
+  .timer-display.danger { color: var(--ep-danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .question-card { border-left: 4px solid var(--ep-border); transition: border-color 0.2s; margin-bottom: 1.25rem; }
+  .question-card.answered { border-left-color: var(--ep-success); }
+  .question-num { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ep-muted); }
+  .option-label { display: flex; align-items: center; gap: 10px; padding: 0.6rem 1rem; border: 1.5px solid var(--ep-border); border-radius: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 0.5rem; }
+  .option-label:hover { border-color: var(--ep-accent); background: #f0f7ff; }
+  input[type=radio]:checked + .option-label { border-color: var(--ep-accent); background: #ebf2ff; font-weight: 600; }
+  .option-key { width: 28px; height: 28px; border-radius: 50%; background: var(--ep-border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  input[type=radio]:checked + .option-label .option-key { background: var(--ep-accent); color: white; }
+  .progress-tracker { display: flex; gap: 4px; flex-wrap: wrap; }
+  .prog-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ep-border); transition: background 0.2s; }
+  .prog-dot.done { background: var(--ep-success); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exam-container">
+  <!-- Timer bar -->
+  <div class="timer-bar">
+    <div>
+      <div class="fw-bold">{{ exam.title }}</div>
+      <div class="small opacity-75">{{ questions|length }} questions</div>
+    </div>
+    <div class="text-center">
+      <div class="small opacity-75">Time Remaining</div>
+      <div class="timer-display" id="timer">--:--</div>
+    </div>
+    <div class="text-end">
+      <div class="small opacity-75 mb-1">Progress</div>
+      <div class="progress-tracker" id="progress-dots">
+        {% for q in questions %}
+          <div class="prog-dot {% if q.pk|stringformat:'s' in saved_answers %}done{% endif %}" id="dot-{{ q.pk }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <form method="post" id="exam-form">
+    {% csrf_token %}
+
+    {% for question in questions %}
+    <div class="card question-card {% if question.pk|stringformat:'s' in saved_answers %}answered{% endif %}" id="card-{{ question.pk }}">
+      <div class="card-body p-4">
+        <div class="question-num mb-2">Question {{ forloop.counter }} of {{ questions|length }} · {{ question.marks }} mark{% if question.marks != 1 %}s{% endif %}</div>
+        <p class="fw-semibold mb-3" style="font-size: 1.05rem;">{{ question.text }}</p>
+
+        {% if question.question_type == 'mcq' or question.question_type == 'true_false' %}
+          {% for key, text in question.get_options %}
+          <div>
+            <input type="radio" name="question_{{ question.pk }}" value="{{ key }}" id="q{{ question.pk }}_{{ key }}"
+              class="d-none answer-radio"
+              {% if saved_answers|dict_value:question.pk == key %}checked{% endif %}
+              data-qid="{{ question.pk }}">
+            <label for="q{{ question.pk }}_{{ key }}" class="option-label w-100">
+              <span class="option-key">{{ key }}</span>
+              <span>{{ text }}</span>
+            </label>
+          </div>
+          {% endfor %}
+
+        {% elif question.question_type == 'short' %}
+            <textarea name="question_{{ question.pk }}" class="form-control short-answer" rows="3"
+            placeholder="Type your answer here…"
+            data-qid="{{ question.pk }}">{{ saved_answers|dict_value:question.pk|default:'' }}</textarea>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="card p-4 mb-4" style="background: #f0fff4; border-color: var(--ep-success);">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="fw-bold">Ready to submit?</div>
+          <div class="small text-muted" id="answer-summary">Check all questions are answered.</div>
+        </div>
+        <button type="submit" class="btn btn-success btn-lg" onclick="return confirmSubmit()">
+          <i class="bi bi-send-check me-1"></i> Submit Exam
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const REMAINING_SECONDS = {{ remaining_seconds }};
+const EXAM_PK = {{ exam.pk }};
+const SAVE_URL = "{% url 'save_answer' exam.pk %}";
+const CSRF = "{{ csrf_token }}";
+
+let timeLeft = REMAINING_SECONDS;
+let answered = new Set();
+
+// Pre-populate from saved
+{% for qid, ans in saved_answers.items %}
+  answered.add("{{ qid }}");
+{% endfor %}
+
+// Timer
+function updateTimer() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  const el = document.getElementById('timer');
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  el.className = 'timer-display';
+  if (timeLeft <= 60) el.classList.add('danger');
+  else if (timeLeft <= 300) el.classList.add('warning');
+  if (timeLeft <= 0) {
+    el.textContent = '00:00';
+    autoSubmit();
+    return;
+  }
+  timeLeft--;
+}
+
+function autoSubmit() {
+  document.getElementById('exam-form').submit();
+}
+
+// Auto-save answers
+async function saveAnswer(qid, answer) {
+  try {
+    await fetch(SAVE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ question_id: qid, answer: answer })
+    });
+  } catch(e) {}
+  answered.add(String(qid));
+  updateProgress(qid);
+  updateSummary();
+}
+
+function updateProgress(qid) {
+  const dot = document.getElementById('dot-' + qid);
+  const card = document.getElementById('card-' + qid);
+  if (dot) dot.classList.add('done');
+  if (card) card.classList.add('answered');
+}
+
+function updateSummary() {
+  const total = document.querySelectorAll('.question-card').length;
+  const done = answered.size;
+  document.getElementById('answer-summary').textContent =
+    `${done} of ${total} questions answered.`;
+}
+
+function confirmSubmit() {
+  const total = document.querySelectorAll('.question-card').length;
+  const done = answered.size;
+  const unanswered = total - done;
+  if (unanswered > 0) {
+    return confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`);
+  }
+  return confirm('Submit your exam? You cannot change answers after submission.');
+}
+
+// Listen to radio changes
+document.querySelectorAll('.answer-radio').forEach(r => {
+  r.addEventListener('change', e => {
+    saveAnswer(e.target.dataset.qid, e.target.value);
+  });
+});
+
+// Listen to textarea changes (debounced)
+let textTimers = {};
+document.querySelectorAll('.short-answer').forEach(ta => {
+  ta.addEventListener('input', e => {
+    const qid = e.target.dataset.qid;
+    clearTimeout(textTimers[qid]);
+    textTimers[qid] = setTimeout(() => saveAnswer(qid, e.target.value), 800);
+  });
+});
+
+updateSummary();
+updateTimer();
+setInterval(updateTimer, 1000);
+
+// Warn before leaving
+window.addEventListener('beforeunload', e => {
+  e.preventDefault();
+  e.returnValue = '';
+});
+</script>
+{% endblock %}

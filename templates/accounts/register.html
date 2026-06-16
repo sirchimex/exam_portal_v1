@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Register — ExamPortal{% endblock %}
+{% block content %}
+<nav class="navbar navbar-light bg-white border-bottom px-4 mx-n4 mt-n4 mb-4">
+  <a class="navbar-brand fw-bold" href="/">Exam<span style="color:var(--ep-accent)">Portal</span></a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Log In</a>
+  </div>
+</nav>
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-5">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Create your account</h2>
+      <p class="text-muted">Join ExamPortal as a student</p>
+    </div>
+    <div class="card p-4">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row">
+          {% for field in form %}
+            <div class="col-md-{% if field.html_name == 'first_name' or field.html_name == 'last_name' %}6{% else %}12{% endif %} mb-3">
+              <label class="form-label fw-semibold">{{ field.label }}
+                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+              </label>
+              <input type="{{ field.field.widget.input_type }}" name="{{ field.html_name }}"
+                class="form-control {% if field.errors %}is-invalid{% endif %}"
+                {% if field.value %}value="{{ field.value }}"{% endif %}>
+              {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Create Account</button>
+      </form>
+    </div>
+    <div class="text-center mt-3 text-muted small">
+      Already have an account? <a href="{% url 'login' %}">Log in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

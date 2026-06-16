@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}{{ object.title }} — Courses{% endblock %}
+
+{% block extra_css %}
+<style>
+  .student-row:hover { background: #f8faff; }
+  .enroll-check:checked + label { border-color: var(--ep-accent) !important; background: #f0f5ff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'course_list' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <div class="flex-grow-1">
+    <h4 class="mb-0 fw-bold">{{ object.title }}</h4>
+    <span class="badge me-1" style="background:#e0e7ff;color:#3730a3">{{ object.code }}</span>
+    {% if object.is_active %}
+      <span class="badge" style="background:#d1fae5;color:#065f46">Active</span>
+    {% else %}
+      <span class="badge bg-secondary">Inactive</span>
+    {% endif %}
+  </div>
+  <a href="{% url 'course_update' object.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil me-1"></i>Edit</a>
+</div>
+
+<!-- Stats strip -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card stat-card p-3">
+      <div class="small text-muted fw-semibold">Enrolled Students</div>
+      <div class="fs-2 fw-bold" style="color:var(--ep-accent)">{{ enrollments|length }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card stat-card success p-3">
+      <div class="small text-muted fw-semibold">Exams in Course</div>
+      <div class="fs-2 fw-bold" style="color:var(--ep-success)">{{ object.exams.count }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card stat-card warning p-3">
+      <div class="small text-muted fw-semibold">Course Code</div>
+      <div class="fs-2 fw-bold" style="color:var(--ep-warning)">{{ object.code }}</div>
+    </div>
+  </div>
+</div>
+
+{% if object.description %}
+<div class="card p-3 mb-4" style="background:#f8faff;border-color:#c7d7fd">
+  <p class="mb-0 text-muted small"><i class="bi bi-info-circle me-1 text-primary"></i>{{ object.description }}</p>
+</div>
+{% endif %}
+
+<div class="row g-4">
+
+  <!-- ── Left: Enrolled students ── -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-people me-1"></i> Enrolled Students</span>
+        <span class="badge bg-primary rounded-pill">{{ enrollments|length }}</span>
+      </div>
+
+      {% if enrollments %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Student</th>
+              <th>Status</th>
+              <th>Enrolled</th>
+              <th>Enrolled By</th>
+              <th class="pe-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enr in enrollments %}
+            <tr class="student-row">
+              <td class="ps-4">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar-circle flex-shrink-0" style="width:32px;height:32px;font-size:.8rem">
+                    {{ enr.student.first_name.0|upper|default:enr.student.username.0|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold small">{{ enr.student.get_full_name|default:enr.student.username }}</div>
+                    <div class="text-muted small">{{ enr.student.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if enr.status == 'active' %}
+                  <span class="badge" style="background:#d1fae5;color:#065f46">Active</span>
+                {% elif enr.status == 'dropped' %}
+                  <span class="badge bg-secondary">Dropped</span>
+                {% else %}
+                  <span class="badge bg-info">{{ enr.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td class="small text-muted">{{ enr.enrolled_at|date:"M d, Y" }}</td>
+              <td class="small text-muted">{{ enr.enrolled_by.get_full_name|default:enr.enrolled_by.username|default:"—" }}</td>
+              <td class="pe-4">
+                {% if enr.status == 'active' %}
+                <form method="post" action="{% url 'course_unenroll' object.pk enr.pk %}"
+                  onsubmit="return confirm('Remove {{ enr.student.get_full_name|default:enr.student.username }} from this course?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-light text-danger" title="Remove student">
+                    <i class="bi bi-person-x"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-5 text-center text-muted">
+        <i class="bi bi-people fs-2 d-block mb-2"></i>
+        No students enrolled yet. Use the form to assign students.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Right: Enrol + Exams ── -->
+  <div class="col-lg-5">
+
+    <!-- Enroll form -->
+    <div class="card mb-4">
+      <div class="card-header py-3 px-4">
+        <i class="bi bi-person-plus me-1"></i> Assign Students
+      </div>
+      <div class="card-body px-4">
+        <form method="post" action="{% url 'course_enroll' object.pk %}">
+          {% csrf_token %}
+          {% if enroll_form.students.field.queryset.count %}
+            <div class="small text-muted mb-2">Select students to enrol:</div>
+            <div class="overflow-auto mb-3" style="max-height:260px;border:1px solid var(--ep-border);border-radius:8px">
+              {% for student in enroll_form.students.field.queryset %}
+              <label class="d-flex align-items-center gap-3 px-3 py-2 border-bottom"
+                style="cursor:pointer;margin:0;transition:background .1s"
+                onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">
+                <input type="checkbox" name="students" value="{{ student.pk }}"
+                  class="form-check-input flex-shrink-0 mt-0">
+                <div>
+                  <div class="small fw-semibold">{{ student.get_full_name|default:student.username }}</div>
+                  <div class="text-muted" style="font-size:.75rem">{{ student.email }}</div>
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="e.g. Enrolled for Semester 1 2025"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-person-plus me-1"></i> Enrol Selected Students
+            </button>
+          {% else %}
+            <p class="text-muted small mb-0">
+              <i class="bi bi-check-circle text-success me-1"></i>
+              All students are already enrolled in this course.
+            </p>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Attached exams -->
+    <div class="card">
+      <div class="card-header py-3 px-4 d-flex justify-content-between">
+        <span><i class="bi bi-journal-text me-1"></i> Course Exams</span>
+        <a href="{% url 'course_update' object.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+      </div>
+      {% if object.exams.all %}
+        <div class="list-group list-group-flush">
+          {% for exam in object.exams.all %}
+          <div class="list-group-item px-4 py-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold small">{{ exam.title }}</div>
+                <div class="text-muted small">
+                  <span class="badge badge-status-{{ exam.status }} me-1">{{ exam.get_status_display }}</span>
+                  {{ exam.duration_minutes }}m · {{ exam.question_count }} Qs
+                </div>
+              </div>
+              <a href="{% url 'exam_update' exam.pk %}" class="btn btn-sm btn-light ms-2">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-center text-muted small">
+          No exams attached. <a href="{% url 'course_update' object.pk %}">Edit course</a> to add exams.
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Question{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'exam_questions' exam.pk %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold">{% if object %}Edit{% else %}Add{% endif %} Question — {{ exam.title }}</h4>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post">
+      {% csrf_token %}
+      <div class="card mb-3">
+        <div class="card-header py-3 px-4">Question Details</div>
+        <div class="card-body px-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Question Text <span class="text-danger">*</span></label>
+            <textarea name="text" class="form-control" rows="3" placeholder="Enter your question here...">{{ form.text.value|default:'' }}</textarea>
+            {% for e in form.text.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Question Type</label>
+              <select name="question_type" class="form-select" id="qtype">
+                <option value="mcq" {% if form.question_type.value == 'mcq' %}selected{% endif %}>Multiple Choice</option>
+                <option value="true_false" {% if form.question_type.value == 'true_false' %}selected{% endif %}>True / False</option>
+                <option value="short" {% if form.question_type.value == 'short' %}selected{% endif %}>Short Answer</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Marks</label>
+              <input type="number" name="marks" class="form-control" min="1" value="{{ form.marks.value|default:'1' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Order</label>
+              <input type="number" name="order" class="form-control" min="0" value="{{ form.order.value|default:'0' }}">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MCQ Options -->
+      <div class="card mb-3" id="mcq-section">
+        <div class="card-header py-3 px-4">Answer Options</div>
+        <div class="card-body px-4">
+          <div class="row">
+            {% for opt in 'ABCD' %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Option {{ opt }}</label>
+              <input type="text" name="option_{{ opt|lower }}" class="form-control"
+                placeholder="Option {{ opt }}"
+                value="{% if opt == 'A' %}{{ form.option_a.value|default:'' }}{% elif opt == 'B' %}{{ form.option_b.value|default:'' }}{% elif opt == 'C' %}{{ form.option_c.value|default:'' }}{% else %}{{ form.option_d.value|default:'' }}{% endif %}">
+            </div>
+            {% endfor %}
+          </div>
+          <div class="mb-0">
+            <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
+            <input type="text" name="correct_answer" class="form-control"
+              placeholder="e.g. A (for MCQ) or True (for True/False) or the answer text"
+              value="{{ form.correct_answer.value|default:'' }}">
+            {% for e in form.correct_answer.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header py-3 px-4">Explanation (Optional)</div>
+        <div class="card-body px-4">
+          <textarea name="explanation" class="form-control" rows="2"
+            placeholder="Explain the correct answer — shown to students after they submit">{{ form.explanation.value|default:'' }}</textarea>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{% if object %}Save Changes{% else %}Add Question{% endif %}</button>
+        <a href="{% url 'exam_questions' exam.pk %}" class="btn btn-light">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite3
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Ruff
+.ruff_cache/
+
+# Type checker
+.pytype/
+
+# Build artifacts
+*.o
+*.obj
+*.dll
+*.exe
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Secrets and credentials
+secrets.json
+credentials.json
+config.local.py
+
+# Django
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+
+# Flask
+instance/
+.webassets-cache
+
+# FastAPI
+.envrc
+
+# PySide6 / Qt
+*.qmlc
+*.jsc
+*.rcc
+*.qrc.depends
+
+# VS Code settings (optional)
+.history/

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Exam — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'exam_list' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold">{% if object %}Edit Exam{% else %}Create New Exam{% endif %}</h4>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post">
+      {% csrf_token %}
+      <!-- Basic Info -->
+      <div class="card mb-3">
+        <div class="card-header py-3 px-4">Basic Information</div>
+        <div class="card-body px-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+              value="{{ form.title.value|default:'' }}" placeholder="e.g. Midterm Mathematics">
+            {% for e in form.title.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea name="description" class="form-control" rows="2">{{ form.description.value|default:'' }}</textarea>
+          </div>
+          <div class="mb-0">
+            <label class="form-label fw-semibold">Instructions</label>
+            <textarea name="instructions" class="form-control" rows="3" placeholder="Instructions shown to students before the exam">{{ form.instructions.value|default:'' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="card mb-3">
+        <div class="card-header py-3 px-4">Schedule & Duration</div>
+        <div class="card-body px-4">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Start Time <span class="text-danger">*</span></label>
+              <input type="datetime-local" name="start_time" class="form-control {% if form.start_time.errors %}is-invalid{% endif %}"
+                value="{{ form.start_time.value|default:'' }}">
+              {% for e in form.start_time.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
+              <input type="datetime-local" name="end_time" class="form-control {% if form.end_time.errors %}is-invalid{% endif %}"
+                value="{{ form.end_time.value|default:'' }}">
+              {% for e in form.end_time.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Duration (minutes) <span class="text-danger">*</span></label>
+              <input type="number" name="duration_minutes" class="form-control" min="1"
+                value="{{ form.duration_minutes.value|default:'60' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Passing Score (%)</label>
+              <input type="number" name="passing_score" class="form-control" min="0" max="100"
+                value="{{ form.passing_score.value|default:'50' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Max Attempts</label>
+              <input type="number" name="max_attempts" class="form-control" min="1"
+                value="{{ form.max_attempts.value|default:'1' }}">
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="shuffle_questions" id="shuffle"
+              {% if form.shuffle_questions.value %}checked{% endif %}>
+            <label class="form-check-label" for="shuffle">Shuffle question order per student</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="card mb-4">
+        <div class="card-header py-3 px-4">Publication Status</div>
+        <div class="card-body px-4">
+          <select name="status" class="form-select">
+            <option value="draft" {% if form.status.value == 'draft' %}selected{% endif %}>Draft</option>
+            <option value="published" {% if form.status.value == 'published' %}selected{% endif %}>Published</option>
+            <option value="closed" {% if form.status.value == 'closed' %}selected{% endif %}>Closed</option>
+          </select>
+          <div class="form-text">Set to "Published" to make the exam available to students during the scheduled window.</div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if object %}Save Changes{% else %}Create Exam{% endif %}
+        </button>
+        <a href="{% url 'exam_list' %}" class="btn btn-light">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card p-3 border-0" style="background: #eef2ff;">
+      <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb text-primary me-1"></i> Tips</h6>
+      <ul class="small text-muted mb-0 ps-3">
+        <li>Set duration shorter than the exam window</li>
+        <li>Add questions after creating the exam</li>
+        <li>Keep status as Draft while building</li>
+        <li>Publish when you're ready for students</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

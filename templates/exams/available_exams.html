@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Available Exams — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-0 fw-bold">Available Exams</h4>
+  <p class="text-muted small mb-0">Exams open and ready to take right now</p>
+</div>
+
+{% if exams %}
+<div class="row g-3">
+  {% for exam in exams %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="badge" style="background: #dbeafe; color: #1e40af; font-size:0.75rem;">Active</span>
+          <span class="text-muted small">{{ exam.duration_minutes }}m</span>
+        </div>
+        <h6 class="fw-bold mb-1">{{ exam.title }}</h6>
+        {% if exam.description %}
+          <p class="text-muted small mb-3">{{ exam.description|truncatechars:80 }}</p>
+        {% endif %}
+        <div class="d-flex gap-3 text-muted small mb-3">
+          <span><i class="bi bi-question-circle me-1"></i>{{ exam.question_count }} Qs</span>
+          <span><i class="bi bi-trophy me-1"></i>Pass: {{ exam.passing_score }}%</span>
+        </div>
+        <div class="text-muted small mb-3">
+          <i class="bi bi-clock-history me-1"></i>
+          Closes {{ exam.end_time|date:"M d, H:i" }}
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top px-4 py-3">
+        {% if exam.pk in taken_exam_ids %}
+          <span class="text-muted small"><i class="bi bi-check-circle-fill text-success me-1"></i> Completed</span>
+        {% else %}
+          <a href="{% url 'exam_detail' exam.pk %}" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-play-fill me-1"></i> Start Exam
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card p-5 text-center text-muted">
+  <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+  <h5>No Exams Available</h5>
+  <p>There are no exams currently open. Check back later or ask your instructor.</p>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm">Back to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Delete Course — ExamPortal{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card p-4 text-center">
+      <div class="text-danger fs-1 mb-2"><i class="bi bi-exclamation-triangle"></i></div>
+      <h5 class="fw-bold mb-2">Delete Course?</h5>
+      <p class="text-muted">
+        You are about to delete <strong>"{{ object.title }}"</strong> ({{ object.code }}).
+        This will remove all enrollments associated with this course.
+        Exam results are <strong>not</strong> deleted.
+      </p>
+      <div class="alert alert-warning py-2 text-start small">
+        <i class="bi bi-people me-1"></i>
+        <strong>{{ object.enrolled_count }}</strong> student(s) currently enrolled will lose access.
+      </div>
+      <form method="post" class="d-flex justify-content-center gap-2 mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete Course</button>
+        <a href="{% url 'course_list' %}" class="btn btn-light">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

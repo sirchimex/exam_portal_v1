@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ExamPortal{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --ep-primary:#1a1f6e; --ep-accent:#4f8ef7; --ep-success:#12b76a;
+      --ep-danger:#f04438;  --ep-warning:#f79009; --ep-surface:#f7f8fc;
+      --ep-border:#e4e7ec;  --ep-text:#101828;    --ep-muted:#667085;
+    }
+    body { background:var(--ep-surface); color:var(--ep-text); font-family:'Inter',system-ui,sans-serif; margin:0; }
+    .sidebar { background:var(--ep-primary); min-height:100vh; width:240px; flex-shrink:0; display:flex; flex-direction:column; }
+    .sidebar .nav-link { color:rgba(255,255,255,.75); padding:.7rem 1.5rem; border-radius:8px; margin:2px 8px; transition:all .15s; text-decoration:none; display:block; }
+    .sidebar .nav-link:hover,.sidebar .nav-link.active { background:rgba(79,142,247,.2); color:#fff; }
+    .sidebar .nav-link i { width:20px; text-align:center; margin-right:8px; }
+    .sidebar-header { padding:1.5rem 1.5rem 1rem; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:.5rem; }
+    .card { border:1px solid var(--ep-border); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .card-header { background:transparent; border-bottom:1px solid var(--ep-border); font-weight:600; }
+    .btn-primary { background:var(--ep-accent)!important; border-color:var(--ep-accent)!important; }
+    .btn-primary:hover { background:#3a7af5!important; border-color:#3a7af5!important; }
+    .stat-card { border-left:4px solid var(--ep-accent); }
+    .stat-card.success { border-left-color:var(--ep-success); }
+    .stat-card.warning { border-left-color:var(--ep-warning); }
+    .stat-card.danger  { border-left-color:var(--ep-danger);  }
+    .badge-status-published { background:#d1fae5; color:#065f46; }
+    .badge-status-draft     { background:#fef3c7; color:#92400e; }
+    .badge-status-closed    { background:#fee2e2; color:#991b1b; }
+    .table th { font-weight:600; color:var(--ep-muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; }
+    .page-header { padding:1.5rem 0 1rem; border-bottom:1px solid var(--ep-border); margin-bottom:1.5rem; }
+    .avatar-circle { width:38px; height:38px; border-radius:50%; background:var(--ep-accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Authenticated shell ─────────────────────────────────── -->
+<div class="d-flex" id="auth-wrap">
+
+  <div class="sidebar d-none d-md-flex flex-column" {% if not user.is_authenticated %}style="display:none!important;"{% endif %}>
+    <div class="sidebar-header">
+      <div class="text-white fw-bold fs-5">Exam<span style="color:var(--ep-accent)">Portal</span></div>
+      <div class="small mt-1" style="color:rgba(255,255,255,.5)">
+        {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}
+        <span class="badge ms-1" style="background:rgba(79,142,247,.25);color:var(--ep-accent);font-size:.7rem">{{ user.role|title }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <nav class="nav flex-column pb-3 flex-grow-1">
+      <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </a>
+      {% if user.is_authenticated and user.is_admin_user %}
+        <div class="px-3 py-1 mt-2" style="color:rgba(255,255,255,.35);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em">Manage</div>
+        <a href="{% url 'exam_list' %}"    class="nav-link {% if 'exam' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-journal-text"></i> Exams</a>
+        <a href="{% url 'exam_create' %}"  class="nav-link"><i class="bi bi-plus-circle"></i> New Exam</a>
+        <a href="{% url 'course_list' %}"  class="nav-link {% if 'course' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-collection"></i> Courses</a>
+        <a href="{% url 'admin_results' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_results' %}active{% endif %}"><i class="bi bi-bar-chart"></i> Results</a>
+      {% elif user.is_authenticated %}
+        <div class="px-3 py-1 mt-2" style="color:rgba(255,255,255,.35);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em">Exams</div>
+        <a href="{% url 'available_exams' %}" class="nav-link {% if request.resolver_match.url_name == 'available_exams' %}active{% endif %}"><i class="bi bi-play-circle"></i> Take Exam</a>
+        <a href="{% url 'my_courses' %}"      class="nav-link {% if 'course' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-collection"></i> My Courses</a>
+        <a href="{% url 'student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' %}active{% endif %}"><i class="bi bi-trophy"></i> My Results</a>
+      {% endif %}
+      <div class="px-3 py-1 mt-2" style="color:rgba(255,255,255,.35);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em">Account</div>
+      <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person"></i> Profile</a>
+    </nav>
+    <div class="p-3 border-top" style="border-color:rgba(255,255,255,.1)!important">
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button type="submit" class="btn btn-sm w-100"
+          style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)">
+          <i class="bi bi-box-arrow-left"></i> Log Out
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;min-height:100vh">
+    <nav class="navbar navbar-light bg-white border-bottom d-md-none px-3" {% if not user.is_authenticated %}style="display:none!important;"{% endif %}>
+      <span class="navbar-brand mb-0 fw-bold">Exam<span style="color:var(--ep-accent)">Portal</span></span>
+      <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-grid"></i></a>
+        <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-left"></i></button>
+        </form>
+      </div>
+    </nav>
+    <div class="p-4">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+          {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div><!-- /auth-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

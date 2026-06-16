@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ exam.title }} — ExamPortal{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center gap-2">
+  <a href="{% url 'available_exams' %}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold">{{ exam.title }}</h4>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-3">About this Exam</h5>
+        {% if exam.description %}
+          <p class="text-muted">{{ exam.description }}</p>
+        {% endif %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="text-center p-3 rounded" style="background: #f0f7ff;">
+              <div class="fs-3 fw-bold" style="color: var(--ep-accent);">{{ exam.duration_minutes }}</div>
+              <div class="small text-muted">Minutes</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-3 rounded" style="background: #f0fff4;">
+              <div class="fs-3 fw-bold" style="color: var(--ep-success);">{{ exam.question_count }}</div>
+              <div class="small text-muted">Questions</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-3 rounded" style="background: #fffbf0;">
+              <div class="fs-3 fw-bold" style="color: var(--ep-warning);">{{ exam.total_marks }}</div>
+              <div class="small text-muted">Total Marks</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-3 rounded" style="background: #fff0f0;">
+              <div class="fs-3 fw-bold" style="color: var(--ep-danger);">{{ exam.passing_score }}%</div>
+              <div class="small text-muted">Pass Mark</div>
+            </div>
+          </div>
+        </div>
+
+        {% if exam.instructions %}
+        <div class="alert alert-info">
+          <h6 class="fw-bold"><i class="bi bi-info-circle me-1"></i> Instructions</h6>
+          <p class="mb-0 small">{{ exam.instructions }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3">Schedule</h6>
+      <table class="table table-sm mb-3">
+        <tr><td class="text-muted small">Opens</td><td class="small fw-semibold">{{ exam.start_time|date:"M d, Y H:i" }}</td></tr>
+        <tr><td class="text-muted small">Closes</td><td class="small fw-semibold">{{ exam.end_time|date:"M d, Y H:i" }}</td></tr>
+        <tr><td class="text-muted small">Duration</td><td class="small fw-semibold">{{ exam.duration_minutes }} minutes</td></tr>
+        <tr><td class="text-muted small">Attempts</td><td class="small fw-semibold">{{ exam.max_attempts }}</td></tr>
+      </table>
+
+      {% if already_taken %}
+        <div class="alert alert-warning small">
+          <i class="bi bi-check-circle me-1"></i> You have already completed this exam.
+        </div>
+        <a href="{% url 'student_results' %}" class="btn btn-outline-primary w-100">View My Results</a>
+      {% elif can_take %}
+        <div class="alert alert-success small mb-3">
+          <i class="bi bi-clock me-1"></i> Exam is active now. The timer starts when you begin.
+        </div>
+        <form method="post" action="{% url 'start_exam' exam.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary w-100 py-2">
+            <i class="bi bi-play-fill me-1"></i> Start Exam
+          </button>
+        </form>
+      {% else %}
+        <div class="alert alert-secondary small">This exam is not currently available.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
